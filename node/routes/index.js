@@ -1,5 +1,5 @@
-import { Router, Request, Response, NextFunction } from 'express';
-const router = Router();
+import { Router, Request, Response, NextFunction } from 'express'
+const router = Router()
 
 const rateLimitBucket = {
   counter: 0,
@@ -14,20 +14,19 @@ const rateLimitBucket = {
  * @param {NextFunction} next
  */
 function rateLimit(req, res, next) {
-  const instant = new Date();
+  const instant = new Date()
   /** @type {Date} */
-  const elapsed = Math.abs(instant - rateLimitBucket.instant) / (1000 * 60);
-  rateLimitBucket.counter += 1 - (elapsed * rateLimitBucket.rate);
+  const elapsed = Math.abs(instant - rateLimitBucket.instant) / (1000 * 60)
+  rateLimitBucket.counter += 1 - elapsed * rateLimitBucket.rate
   if (rateLimitBucket.counter > rateLimitBucket.limit) {
-    res.status(429).header("Retry-After", 60).send({});
+    res.status(429).header('Retry-After', 60).send({})
   }
   next()
 }
 
-
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+router.get('/', function (req, res, next) {
+  res.render('index', { title: 'Express' })
+})
 
-export default router;
+export default router
