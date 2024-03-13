@@ -3,9 +3,5 @@
 version = 3
 
 [[package]]
-name = "rust"
-version = "0.1.0"
-
-[[package]]
-name = "tt"
+name = "Rate-limit-exercise"
 version = "0.1.0"
