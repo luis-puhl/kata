@@ -17,23 +17,20 @@ impl Bucket {
             limit: 100,
             rate: 100,
             interval: 60,
-        }; 
+        };
+    }
+
+    fn ingest(&mut self) -> &mut Self {
+        self.counter += 1;
+        self.instant = SystemTime::now();
+        self
+    }
+
+    fn is_limited(&self) -> bool {
+        return self.counter > self.limit;
     }
 }
 
-fn is_limited(bucket: &Bucket) -> bool {
-    return bucket.counter > bucket.limit;
-}
-
-fn ingest(bucket: &mut Bucket) -> Bucket {
-    return Bucket {
-        instant: SystemTime::now(),
-        counter: bucket.counter + 1,
-        limit: bucket.limit,
-        rate: bucket.rate,
-        interval: bucket.interval,
-    };
-}
 /*
 trait RateLimit {
     fn intake(&mut self, instant: SystemTime) -> Self;
@@ -53,11 +50,11 @@ impl RateLimit for Bucket {
 fn main() {
     println!("Hello, world!");
     let mut bucket: Bucket = Bucket::new();
-    println!("{:#?}", bucket);
-    println!("{:#?}", is_limited(&bucket));
+    println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
 
-    // ingest(&bucket);
     bucket.counter += 1;
-    println!("{:#?}", bucket);
-    println!("{:#?}", is_limited(&bucket));
+    println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
+
+    bucket.ingest();
+    println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
 }
