@@ -2,7 +2,7 @@ use std::time::{Duration, SystemTime};
 
 #[derive(Debug)]
 struct Bucket {
-    pub instant: SystemTime,
+    pub last_leak: SystemTime,
     pub counter: u128,
     pub limit: u128,
     pub rate: u128,
@@ -10,9 +10,8 @@ struct Bucket {
 }
 
 impl Bucket {
-    fn ingest(&mut self, new_instant: SystemTime) -> &mut Self {
+    fn ingest(&mut self) -> &mut Self {
         self.counter += 1;
-        self.instant = new_instant;
         self
     }
 
@@ -22,7 +21,7 @@ impl Bucket {
 
     fn leak(&mut self, new_instant: SystemTime) -> &mut Self {
         let elapsed = new_instant
-            .duration_since(self.instant)
+            .duration_since(self.last_leak)
             .unwrap_or_else(|_error| Duration::ZERO);
         if elapsed < self.interval {
             return self;
@@ -33,8 +32,14 @@ impl Bucket {
         }
         let leak = intervals * self.rate;
         self.counter -= self.counter.min(leak);
-        self.instant = new_instant;
+        self.last_leak = new_instant;
         self
+    }
+
+    fn should_stop(&mut self, new_instant: SystemTime) -> bool {
+        let stop = self.ingest().is_limited();
+        self.leak(new_instant);
+        stop
     }
 }
 
@@ -57,10 +62,10 @@ impl RateLimit for Bucket {
 fn main() {
     println!("Hello, world!");
     let mut bucket: Bucket = Bucket {
-        instant: SystemTime::now(),
+        last_leak: SystemTime::now(),
         counter: 0,
-        limit: 100,
-        rate: 100,
+        limit: 10,
+        rate: 10,
         interval: Duration::from_secs(10),
     };
 
@@ -69,7 +74,7 @@ fn main() {
     bucket.counter += 1;
     println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
 
-    bucket.ingest(SystemTime::now());
+    bucket.ingest();
     println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
 
     bucket.leak(
@@ -78,4 +83,22 @@ fn main() {
             .expect("Can add 10s to now()"),
     );
     println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
+
+    let mut stoped = false;
+    loop {
+        let now = SystemTime::now();
+        let stop = bucket.should_stop(now);
+        println!(
+            "{:#?}, elapsed: {:#?}, stop?: {:#?}",
+            bucket.counter,
+            now.duration_since(bucket.last_leak.min(now)).unwrap(),
+            stop
+        );
+        if stop {
+            stoped = true;
+        }
+        if stoped && !stop {
+            break;
+        }
+    }
 }
