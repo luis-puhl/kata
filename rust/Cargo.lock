@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "Rate-limit-exercise"
+name = "rate_limit_exercise"
 version = "0.1.0"
