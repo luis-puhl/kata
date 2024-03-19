@@ -1,4 +1,7 @@
-use std::time::{Duration, SystemTime};
+use std::{
+    thread::sleep,
+    time::{Duration, SystemTime},
+};
 
 #[derive(Debug)]
 struct Bucket {
@@ -79,7 +82,7 @@ fn main() {
 
     bucket.leak(
         SystemTime::now()
-            .checked_add(Duration::from_secs(10))
+            .checked_add(Duration::from_secs(1))
             .expect("Can add 10s to now()"),
     );
     println!("{:#?}, limited: {:#?}", bucket, bucket.is_limited());
@@ -87,16 +90,21 @@ fn main() {
     let mut stoped = false;
     loop {
         let now = SystemTime::now();
-        let stop = bucket.should_stop(now);
+        let stop = bucket.is_limited();
+        if stop {
+            bucket.leak(now);
+            stoped = true;
+            sleep(Duration::from_secs(1))
+        } else {
+            bucket.ingest();
+        }
         println!(
-            "{:#?}, elapsed: {:#?}, stop?: {:#?}",
+            "{:#?}, elapsed: {:#?}, stop?: {:#?}, stoped? {:#?}",
             bucket.counter,
             now.duration_since(bucket.last_leak.min(now)).unwrap(),
-            stop
+            stop,
+            stoped
         );
-        if stop {
-            stoped = true;
-        }
         if stoped && !stop {
             break;
         }
