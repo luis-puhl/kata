@@ -39,11 +39,11 @@ impl Bucket {
         self
     }
 
-    fn should_stop(&mut self, new_instant: SystemTime) -> bool {
-        let stop = self.ingest().is_limited();
-        self.leak(new_instant);
-        stop
-    }
+    // fn should_stop(&mut self, new_instant: SystemTime) -> bool {
+    //     let stop = self.ingest().is_limited();
+    //     self.leak(new_instant);
+    //     stop
+    // }
 }
 
 /*
@@ -108,5 +108,35 @@ fn main() {
         if stoped && !stop {
             break;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn gg() {
+        let mut bucket: Bucket = Bucket {
+            last_leak: SystemTime::now(),
+            counter: 0,
+            limit: 10,
+            rate: 10,
+            interval: Duration::from_secs(10),
+        };
+        assert!( bucket.is_limited() == false, "Initial state is not limited");
+        loop {
+            bucket.ingest();
+            if bucket.is_limited() {
+                break;
+            }
+        }
+        assert!( bucket.is_limited() == true, "After ingest 10 times, it should be limited");
+        bucket.leak(
+            SystemTime::now()
+                .checked_add(Duration::from_secs(11))
+                .expect("Can add 11s to now()"),
+        );
+        assert!( bucket.is_limited() == false, "After 11s, it should not be limited");
     }
 }
