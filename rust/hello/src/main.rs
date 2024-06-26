@@ -2,18 +2,6 @@ use std::fs;
 use std::io::prelude::*;
 use std::net::TcpListener;
 
-fn get() -> String {
-    let contents = fs::read_to_string("index.html").unwrap();
-    let response = format!("HTTP/1.1 200 OK\r\n\r\n{}", contents);
-    response
-}
-
-fn http404() -> String {
-    let contents = fs::read_to_string("404.html").unwrap();
-    let response = format!("HTTP/1.1 404 NOT FOUND\r\n\r\n{}", contents);
-    response
-}
-
 fn handle_connection(mut stream: std::net::TcpStream) {
     let mut buffer = [0; 1024];
     stream.read(&mut buffer).unwrap();
@@ -23,12 +11,15 @@ fn handle_connection(mut stream: std::net::TcpStream) {
     println!("Request: {}", path);
     
     let get_prefix = b"GET / HTTP/1.1\r\n";
-    let response = if buffer.starts_with(get_prefix) {
-        get()
+    let (head, file) = if buffer.starts_with(get_prefix) {
+        ("HTTP/1.1 200 OK", "index.html")
     } else {
-        http404()
+        ("HTTP/1.1 404 NOT FOUND", "404.html")
     };
-    println!("Response: {}", response.lines().next().unwrap());
+    println!("Response: {}", head);
+    let contents = fs::read_to_string(file).unwrap();
+    let response = format!("{}\r\n\r\n{}", head, contents);
+    
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
 }
