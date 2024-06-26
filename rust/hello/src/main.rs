@@ -9,7 +9,7 @@ fn handle_connection(mut stream: std::net::TcpStream) {
     let mut req_lines = request.lines();
     let path = req_lines.next().unwrap();
     println!("Request: {}", path);
-    
+
     let get_prefix = b"GET / HTTP/1.1\r\n";
     let (head, file) = if buffer.starts_with(get_prefix) {
         ("HTTP/1.1 200 OK", "index.html")
@@ -19,7 +19,7 @@ fn handle_connection(mut stream: std::net::TcpStream) {
     println!("Response: {}", head);
     let contents = fs::read_to_string(file).unwrap();
     let response = format!("{}\r\n\r\n{}", head, contents);
-    
+
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
 }

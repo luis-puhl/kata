@@ -124,19 +124,25 @@ mod tests {
             rate: 10,
             interval: Duration::from_secs(10),
         };
-        assert!( bucket.is_limited() == false, "Initial state is not limited");
+        assert!(bucket.is_limited() == false, "Initial state is not limited");
         loop {
             bucket.ingest();
             if bucket.is_limited() {
                 break;
             }
         }
-        assert!( bucket.is_limited() == true, "After ingest 10 times, it should be limited");
+        assert!(
+            bucket.is_limited() == true,
+            "After ingest 10 times, it should be limited"
+        );
         bucket.leak(
             SystemTime::now()
                 .checked_add(Duration::from_secs(11))
                 .expect("Can add 11s to now()"),
         );
-        assert!( bucket.is_limited() == false, "After 11s, it should not be limited");
+        assert!(
+            bucket.is_limited() == false,
+            "After 11s, it should not be limited"
+        );
     }
 }
