@@ -11,14 +11,15 @@ fn handle_connection(mut stream: std::net::TcpStream) {
     println!("Request: {}", path);
 
     let get_prefix = b"GET / HTTP/1.1\r\n";
-    let (head, file) = if buffer.starts_with(get_prefix) {
+    let (status_line, file) = if buffer.starts_with(get_prefix) {
         ("HTTP/1.1 200 OK", "index.html")
     } else {
         ("HTTP/1.1 404 NOT FOUND", "404.html")
     };
-    println!("Response: {}", head);
+    println!("Response: {}", status_line);
     let contents = fs::read_to_string(file).unwrap();
-    let response = format!("{}\r\n\r\n{}", head, contents);
+    let content_length = contents.len();
+    let response = format!("{status_line}\r\nContent-Length: {content_length}\r\n\r\n{contents}");
 
     stream.write(response.as_bytes()).unwrap();
     stream.flush().unwrap();
