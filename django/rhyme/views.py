@@ -8,3 +8,8 @@ def hello(request: HttpRequest):
   # return HttpResponse('Hello world')
   name = request.GET.get('q')
   return render(request, 'greet.html', {'name': name})
+
+def todos(request: HttpRequest):
+  return render(request, 'todos.html', {
+    'todos': ['strech', 'run', 'lift']
+  })
